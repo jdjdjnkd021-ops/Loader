@@ -1,0 +1,790 @@
+-- Services & Core Ali.boxpvp Ultimate God Engine (Full Power & God-Tier Anti-Kick Bypass)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- 👑 صلاحيات الأونر والكواونرز
+local OWNER_NAME = "cjklolcj10"
+local CO_OWNER_1 = "Akzkaic"
+local CO_OWNER_2 = "4nm0w1"
+local CO_OWNER_3 = "Rt_55mn" -- صار كواونر بصلاحيات كاملة ويفتح القائمة
+
+local isOwnerOrHelper = (LocalPlayer.Name == OWNER_NAME or LocalPlayer.Name == CO_OWNER_1 or LocalPlayer.Name == CO_OWNER_2 or LocalPlayer.Name == CO_OWNER_3)
+
+local _G_AdminConfig = {
+    GodMode = false,
+    OneHitKill = false,
+    InfAmmo = true, -- تفعيل دائم للطلق اللانهائي
+    UltraSpamFire = true, -- تفعيل دائم للرشاش الخرافي
+    PlayerFly = false,
+    FlySpeed = 60,
+    SuperMystery = false,
+    TagEnabled = true
+}
+
+-- 🛡️ أقوى حماية بالعالم ضد الطرد والباند (God Anti-Kick & Anti-Ban)
+pcall(function()
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local oldNamecall = mt.__namecall
+    local oldIndex = mt.__index
+
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        if method == "Kick" or method == "kick" or method == "BAN" or method == "ban" then
+            if self == LocalPlayer then
+                return -- إلغاء أي محاولة طرد تخصك فوراً
+            end
+        end
+        return oldNamecall(self, unpack(args))
+    end)
+
+    mt.__index = newcclosure(function(self, k)
+        if k == "WalkSpeed" or k == "JumpPower" then
+            return 16, 50
+        end
+        return oldIndex(self, k)
+    end)
+    setreadonly(mt, true)
+
+    -- منع طرد الخمول (Anti-AFK)
+    for _, conn in ipairs(getconnections(LocalPlayer.Idled)) do
+        conn:Disable()
+    end
+end)
+
+-- 🌐 نظام مشاركة حالة تفعيل السكربت
+_G.AliScriptUsers = _G.AliScriptUsers or {}
+_G.AliScriptUsers[LocalPlayer.Name] = true
+
+-- بناء ساحة القتال الفخمة والبعيدة جداً
+pcall(function()
+    if not Workspace:FindFirstChild("AliSecretPvPArena") then
+        local Folder = Instance.new("Folder")
+        Folder.Name = "AliSecretPvPArena"
+        Folder.Parent = Workspace
+        
+        local p = Instance.new("Part")
+        p.Name = "MassivePvPArena"
+        p.Size = Vector3.new(1000, 10, 1000)
+        p.Position = Vector3.new(50000, 5000, 50000)
+        p.Anchored = true
+        p.BrickColor = BrickColor.new("Really black")
+        p.Material = Enum.Material.Neon
+        p.Parent = Folder
+    end
+end)
+
+-- تنظيف الواجهة القديمة
+pcall(function()
+    if CoreGui:FindFirstChild("AliProHumanGui") then
+        CoreGui.AliProHumanGui:Destroy()
+    end
+end)
+
+-- إنشاء شاشة القوائم الرئيسية
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AliProHumanGui"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+-- نظام السحب العام لأي زر أو نافذة
+local function MakeDraggable(gui, handle)
+    handle = handle or gui
+    local dragging, dragInput, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- دوائر التحكم
+local function createCircleBtn(text, color, pos)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 50, 0, 50)
+    btn.Position = pos
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    btn.Text = text
+    btn.TextColor3 = color
+    btn.TextSize = 16
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Parent = ScreenGui
+
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = btn
+    local s = Instance.new("UIStroke") s.Color = color s.Thickness = 2 s.Parent = btn
+    
+    MakeDraggable(btn)
+    return btn
+end
+
+local ToggleBtn = createCircleBtn("Ali", Color3.fromRGB(0, 170, 255), UDim2.new(0, 40, 0, 180))
+local OwnerBtn = createCircleBtn("👑", Color3.fromRGB(255, 50, 50), UDim2.new(0, 40, 0, 245))
+OwnerBtn.Visible = isOwnerOrHelper
+
+-- نافذة الهับ الأساسية
+local MainWin = Instance.new("Frame")
+MainWin.Size = UDim2.new(0, 280, 0, 520)
+MainWin.Position = UDim2.new(0, 110, 0, 180)
+MainWin.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+MainWin.Visible = false
+MainWin.Parent = ScreenGui
+Instance.new("UICorner", MainWin).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", MainWin).Color = Color3.fromRGB(0, 170, 255)
+
+local TopMain = Instance.new("TextLabel")
+TopMain.Size = UDim2.new(1, 0, 0, 38)
+TopMain.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+TopMain.Text = "  ⚡ Ali.boxpvp - Main Hub"
+TopMain.TextColor3 = Color3.fromRGB(0, 170, 255)
+TopMain.Font = Enum.Font.SourceSansBold
+TopMain.TextSize = 13
+TopMain.TextXAlignment = Enum.TextXAlignment.Left
+TopMain.Parent = MainWin
+Instance.new("UICorner", TopMain).CornerRadius = UDim.new(0, 10)
+
+local MainScroll = Instance.new("ScrollingFrame")
+MainScroll.Size = UDim2.new(1, 0, 1, -45)
+MainScroll.Position = UDim2.new(0, 0, 0, 42)
+MainScroll.BackgroundTransparency = 1
+MainScroll.CanvasSize = UDim2.new(0, 0, 0, 950)
+MainScroll.Parent = MainWin
+
+-- نافذة الأونر والكواونرز
+local OwnerWin = Instance.new("Frame")
+OwnerWin.Size = UDim2.new(0, 290, 0, 580)
+OwnerWin.Position = UDim2.new(0, 400, 0, 180)
+OwnerWin.BackgroundColor3 = Color3.fromRGB(20, 12, 12)
+OwnerWin.Visible = false
+OwnerWin.Parent = ScreenGui
+Instance.new("UICorner", OwnerWin).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", OwnerWin).Color = Color3.fromRGB(255, 50, 50)
+
+local TopOwner = Instance.new("TextLabel")
+TopOwner.Size = UDim2.new(1, 0, 0, 38)
+TopOwner.BackgroundColor3 = Color3.fromRGB(35, 18, 18)
+TopOwner.Text = "  👑 God Protection & Co-Owner Panel"
+TopOwner.TextColor3 = Color3.fromRGB(255, 80, 80)
+TopOwner.Font = Enum.Font.SourceSansBold
+TopOwner.TextSize = 13
+TopOwner.TextXAlignment = Enum.TextXAlignment.Left
+TopOwner.Parent = OwnerWin
+Instance.new("UICorner", TopOwner).CornerRadius = UDim.new(0, 10)
+
+local OwnerScroll = Instance.new("ScrollingFrame")
+OwnerScroll.Size = UDim2.new(1, 0, 1, -45)
+OwnerScroll.Position = UDim2.new(0, 0, 0, 42)
+OwnerScroll.BackgroundTransparency = 1
+OwnerScroll.CanvasSize = UDim2.new(0, 0, 0, 1150)
+OwnerScroll.Parent = OwnerWin
+
+MakeDraggable(MainWin, TopMain)
+MakeDraggable(OwnerWin, TopOwner)
+
+local _G_Cfg = {
+    VehicleFly = false,
+    FlySpeed = 80,
+    ESP = false,
+    NamesESP = false,
+    Speed = false,
+    Jump = false,
+    InfiniteJump = false,
+    Hitbox = false,
+    HitboxSize = 3
+}
+
+local SavedPosition = nil
+
+local function addMainToggle(name, y, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 240, 0, 35)
+    btn.Position = UDim2.new(0, 20, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.Parent = MainScroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = name .. (active and ": ON" or ": OFF")
+        btn.BackgroundColor3 = active and Color3.fromRGB(0, 120, 215) or Color3.fromRGB(28, 28, 35)
+        callback(active)
+    end)
+end
+
+addMainToggle("Vehicle Fly (طيران السيارات)", 10, function(v) _G_Cfg.VehicleFly = v end)
+
+local FlyLabel = Instance.new("TextLabel")
+FlyLabel.Size = UDim2.new(0, 240, 0, 20)
+FlyLabel.Position = UDim2.new(0, 20, 0, 50)
+FlyLabel.BackgroundTransparency = 1
+FlyLabel.Text = "سرعة طيران السيارات: 80"
+FlyLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
+FlyLabel.Font = Enum.Font.SourceSansBold
+FlyLabel.TextSize = 12
+FlyLabel.Parent = MainScroll
+
+local FlyPlus = Instance.new("TextButton")
+FlyPlus.Size = UDim2.new(0, 115, 0, 28)
+FlyPlus.Position = UDim2.new(0, 20, 0, 72)
+FlyPlus.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+FlyPlus.Text = "سرعة الطيران (+)"
+FlyPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyPlus.Font = Enum.Font.SourceSansBold
+FlyPlus.TextSize = 11
+FlyPlus.Parent = MainScroll
+Instance.new("UICorner", FlyPlus).CornerRadius = UDim.new(0, 4)
+
+local FlyMinus = Instance.new("TextButton")
+FlyMinus.Size = UDim2.new(0, 115, 0, 28)
+FlyMinus.Position = UDim2.new(0, 145, 0, 72)
+FlyMinus.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+FlyMinus.Text = "سرعة الطيران (-)"
+FlyMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyMinus.Font = Enum.Font.SourceSansBold
+FlyMinus.TextSize = 11
+FlyMinus.Parent = MainScroll
+Instance.new("UICorner", FlyMinus).CornerRadius = UDim.new(0, 4)
+
+FlyPlus.MouseButton1Click:Connect(function()
+    _G_Cfg.FlySpeed = math.clamp(_G_Cfg.FlySpeed + 20, 20, 500)
+    FlyLabel.Text = "سرعة طيران السيارات: " .. _G_Cfg.FlySpeed
+end)
+
+FlyMinus.MouseButton1Click:Connect(function()
+    _G_Cfg.FlySpeed = math.clamp(_G_Cfg.FlySpeed - 20, 20, 500)
+    FlyLabel.Text = "سرعة طيران السيارات: " .. _G_Cfg.FlySpeed
+end)
+
+addMainToggle("ESP Players (كشف الأماكن والمسافة)", 110, function(v) _G_Cfg.ESP = v end)
+addMainToggle("ESP Names (كشف الأسماء)", 155, function(v) _G_Cfg.NamesESP = v end)
+addMainToggle("Speed Hack (سرعة الحركة)", 200, function(v) _G_Cfg.Speed = v end)
+addMainToggle("Super Jump (نطة خارقة)", 245, function(v) _G_Cfg.Jump = v end)
+addMainToggle("Infinite Jumps (نطات لا تنتهي)", 290, function(v) _G_Cfg.InfiniteJump = v end)
+addMainToggle("Hitbox Expander (توسيع الهيت بوكس)", 335, function(v) _G_Cfg.Hitbox = v end)
+
+local arenaBtn = Instance.new("TextButton")
+arenaBtn.Size = UDim2.new(0, 240, 0, 35)
+arenaBtn.Position = UDim2.new(0, 20, 0, 380)
+arenaBtn.BackgroundColor3 = Color3.fromRGB(110, 0, 180)
+arenaBtn.Text = "⚔️ الانتقال لساحة القتال البعيدة"
+arenaBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+arenaBtn.Font = Enum.Font.SourceSansBold
+arenaBtn.TextSize = 12
+arenaBtn.Parent = MainScroll
+Instance.new("UICorner", arenaBtn).CornerRadius = UDim.new(0, 6)
+
+arenaBtn.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.CFrame = CFrame.new(Vector3.new(50000, 5010, 50000))
+    end
+end)
+
+local function addActionBtn(name, y, color, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 240, 0, 35)
+    b.Position = UDim2.new(0, 20, 0, y)
+    b.BackgroundColor3 = color
+    b.Text = name
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 12
+    b.Parent = MainScroll
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    b.MouseButton1Click:Connect(callback)
+    return b
+end
+
+addActionBtn("حفظ المكان الحالي (Save Pos)", 425, Color3.fromRGB(0, 100, 180), function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then SavedPosition = root.CFrame end
+end)
+
+addActionBtn("الانتقال للمكان المحفوظ (Teleport)", 470, Color3.fromRGB(180, 50, 0), function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root and SavedPosition then root.CFrame = SavedPosition end
+end)
+
+addActionBtn("إسعاف (ذهاب وعودة فورية)", 515, Color3.fromRGB(180, 0, 0), function()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root and SavedPosition then
+        local current = root.CFrame
+        root.CFrame = SavedPosition
+        task.wait(2)
+        root.CFrame = current
+    end
+end)
+
+local HBLabel = Instance.new("TextLabel")
+HBLabel.Size = UDim2.new(0, 240, 0, 20)
+HBLabel.Position = UDim2.new(0, 20, 0, 560)
+HBLabel.BackgroundTransparency = 1
+HBLabel.Text = "حجم الهيت بوكس: 3x"
+HBLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
+HBLabel.Font = Enum.Font.SourceSansBold
+HBLabel.TextSize = 12
+HBLabel.Parent = MainScroll
+
+local HBPlus = Instance.new("TextButton")
+HBPlus.Size = UDim2.new(0, 115, 0, 28)
+HBPlus.Position = UDim2.new(0, 20, 0, 585)
+HBPlus.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+HBPlus.Text = "تكبير (+)"
+HBPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+HBPlus.Font = Enum.Font.SourceSansBold
+HBPlus.TextSize = 11
+HBPlus.Parent = MainScroll
+Instance.new("UICorner", HBPlus).CornerRadius = UDim.new(0, 4)
+
+local HBMinus = Instance.new("TextButton")
+HBMinus.Size = UDim2.new(0, 115, 0, 28)
+HBMinus.Position = UDim2.new(0, 145, 0, 585)
+HBMinus.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+HBMinus.Text = "تصغير (-)"
+HBMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+HBMinus.Font = Enum.Font.SourceSansBold
+HBMinus.TextSize = 11
+HBMinus.Parent = MainScroll
+Instance.new("UICorner", HBMinus).CornerRadius = UDim.new(0, 4)
+
+HBPlus.MouseButton1Click:Connect(function()
+    _G_Cfg.HitboxSize = math.clamp(_G_Cfg.HitboxSize + 1, 1, 30)
+    HBLabel.Text = "حجم الهيت بوكس: " .. _G_Cfg.HitboxSize .. "x"
+end)
+
+HBMinus.MouseButton1Click:Connect(function()
+    _G_Cfg.HitboxSize = math.clamp(_G_Cfg.HitboxSize - 1, 1, 30)
+    HBLabel.Text = "حجم الهيت بوكس: " .. _G_Cfg.HitboxSize .. "x"
+end)
+
+-- قائمة الأونر الاحترافية
+local function addAdminToggle(name, y, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 250, 0, 35)
+    btn.Position = UDim2.new(0, 20, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 25, 25)
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 12
+    btn.Parent = OwnerScroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local active = false
+    btn.MouseButton1Click:Connect(function()
+        active = not active
+        btn.Text = name .. (active and ": ON" or ": OFF")
+        btn.BackgroundColor3 = active and Color3.fromRGB(220, 50, 50) or Color3.fromRGB(40, 25, 25)
+        callback(active)
+    end)
+end
+
+addAdminToggle("🛡️ ما تموت (God Mode)", 20, function(v) _G_AdminConfig.GodMode = v end)
+addAdminToggle("⚡ قتل بطلقة واحدة", 65, function(v) _G_AdminConfig.OneHitKill = v end)
+addAdminToggle("🔫 طلق بدون رصاص", 110, function(v) _G_AdminConfig.InfAmmo = v end)
+addAdminToggle("🦅 طيران شخصي (Player Fly)", 155, function(v) _G_AdminConfig.PlayerFly = v end)
+
+-- زر 100 ألف طلقة بالثانية (مفعل وقوي)
+local ultraFireBtn = Instance.new("TextButton")
+ultraFireBtn.Size = UDim2.new(0, 250, 0, 42)
+ultraFireBtn.Position = UDim2.new(0, 20, 0, 200)
+ultraFireBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+ultraFireBtn.Text = "🚀 100 ألف طلقة/ثانية: OFF"
+ultraFireBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ultraFireBtn.Font = Enum.Font.SourceSansBold
+ultraFireBtn.TextSize = 11
+ultraFireBtn.Parent = OwnerScroll
+Instance.new("UICorner", ultraFireBtn).CornerRadius = UDim.new(0, 6)
+
+ultraFireBtn.MouseButton1Click:Connect(function()
+    _G_AdminConfig.UltraSpamFire = not _G_AdminConfig.UltraSpamFire
+    ultraFireBtn.Text = "🚀 100 ألف طلقة/ثانية: " .. (_G_AdminConfig.UltraSpamFire and "ON" or "OFF")
+    ultraFireBtn.BackgroundColor3 = _G_AdminConfig.UltraSpamFire and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(0, 150, 200)
+end)
+
+-- زر علامات الاستفهام الأسطوري
+local mysteryBtn = Instance.new("TextButton")
+mysteryBtn.Size = UDim2.new(0, 250, 0, 42)
+mysteryBtn.Position = UDim2.new(0, 20, 0, 250)
+mysteryBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 180)
+mysteryBtn.Text = "❓ ميزات الأونر الأسطورية: OFF"
+mysteryBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+mysteryBtn.Font = Enum.Font.SourceSansBold
+mysteryBtn.TextSize = 12
+mysteryBtn.Parent = OwnerScroll
+Instance.new("UICorner", mysteryBtn).CornerRadius = UDim.new(0, 6)
+
+mysteryBtn.MouseButton1Click:Connect(function()
+    _G_AdminConfig.SuperMystery = not _G_AdminConfig.SuperMystery
+    mysteryBtn.Text = "❓ ميزات الأونر الأسطورية: " .. (_G_AdminConfig.SuperMystery and "ON" or "OFF")
+    mysteryBtn.BackgroundColor3 = _G_AdminConfig.SuperMystery and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(130, 0, 180)
+end)
+
+-- إضافة أزرار الفلنق للاعبين في قائمة الأونر
+local function RefreshOwnerPanel()
+    pcall(function()
+        for _, child in ipairs(OwnerScroll:GetChildren()) do
+            if child.Name == "UserFlingFrame" then child:Destroy() end
+        end
+
+        local yOffset = 305
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                local userFrame = Instance.new("Frame")
+                userFrame.Name = "UserFlingFrame"
+                userFrame.Size = UDim2.new(0, 250, 0, 68)
+                userFrame.Position = UDim2.new(0, 20, 0, yOffset)
+                userFrame.BackgroundColor3 = Color3.fromRGB(30, 18, 18)
+                userFrame.Parent = OwnerScroll
+                Instance.new("UICorner", userFrame).CornerRadius = UDim.new(0, 6)
+                Instance.new("UIStroke", userFrame).Color = Color3.fromRGB(150, 40, 40)
+
+                local nameLbl = Instance.new("TextLabel")
+                nameLbl.Size = UDim2.new(1, 0, 0, 22)
+                nameLbl.Position = UDim2.new(0, 10, 0, 3)
+                nameLbl.BackgroundTransparency = 1
+                nameLbl.Text = "👤 " .. p.Name
+                nameLbl.TextColor3 = Color3.fromRGB(0, 255, 200)
+                nameLbl.Font = Enum.Font.SourceSansBold
+                nameLbl.TextSize = 12
+                nameLbl.Parent = userFrame
+
+                local flingBtn = Instance.new("TextButton")
+                flingBtn.Size = UDim2.new(0, 230, 0, 32)
+                flingBtn.Position = UDim2.new(0, 10, 0, 28)
+                flingBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 0)
+                flingBtn.Text = "🌪️ Fling (فلنق 5 ثواني)"
+                flingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                flingBtn.Font = Enum.Font.SourceSansBold
+                flingBtn.TextSize = 11
+                flingBtn.Parent = userFrame
+                Instance.new("UICorner", flingBtn).CornerRadius = UDim.new(0, 4)
+
+                flingBtn.MouseButton1Click:Connect(function()
+                    flingBtn.Text = "جاري الفلنق... (5s)"
+                    task.spawn(function()
+                        local start = tick()
+                        while tick() - start < 5 do
+                            pcall(function()
+                                local root = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+                                if root then
+                                    root.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+                                    root.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
+                                end
+                            end)
+                            task.wait()
+                        end
+                        flingBtn.Text = "🌪️ Fling (فلنق 5 ثواني)"
+                    end)
+                end)
+
+                yOffset = yOffset + 78
+            end
+        end
+    end)
+end
+
+-- ربط الأزرار الدائرية بفتح وإغلاق القوائم
+ToggleBtn.MouseButton1Click:Connect(function() MainWin.Visible = not MainWin.Visible end)
+OwnerBtn.MouseButton1Click:Connect(function()
+    OwnerWin.Visible = not OwnerWin.Visible
+    if OwnerWin.Visible then RefreshOwnerPanel() end
+end)
+
+-- نظام التاج الثابت (يشمل الأونر، والكواونرز، و Rt_55mn)
+local function SetupIdentityAndTracking(p)
+    pcall(function()
+        local function applyTag(char)
+            if not char then return end
+            local head = char:WaitForChild("Head", 5)
+            if not head then return end
+            if head:FindFirstChild("AliOwnerTag") then head.AliOwnerTag:Destroy() end
+            
+            if p.Name == OWNER_NAME or p.Name == CO_OWNER_1 or p.Name == CO_OWNER_2 or p.Name == CO_OWNER_3 then
+                local bg = Instance.new("BillboardGui")
+                bg.Name = "AliOwnerTag"
+                bg.Size = UDim2.new(0, 180, 0, 50)
+                bg.StudsOffset = Vector3.new(0, 3.2, 0)
+                bg.AlwaysOnTop = true
+                bg.Parent = head
+
+                local txt = Instance.new("TextLabel")
+                txt.Name = "TagText"
+                txt.Size = UDim2.new(1, 0, 1, 0)
+                txt.BackgroundTransparency = 1
+                
+                if p.Name == OWNER_NAME then
+                    txt.Text = "👑 أونر السكربت 👑"
+                elseif p.Name == CO_OWNER_1 then
+                    txt.Text = "⭐ Akzkaic ⭐"
+                elseif p.Name == CO_OWNER_2 then
+                    txt.Text = "⭐ 4nm0w1 ⭐"
+                elseif p.Name == CO_OWNER_3 then
+                    txt.Text = "⭐ Rt_55mn ⭐"
+                end
+
+                txt.TextColor3 = Color3.fromRGB(255, 50, 50)
+                txt.TextSize = 14
+                txt.Font = Enum.Font.SourceSansBold
+                txt.TextStrokeTransparency = 0
+                txt.Parent = bg
+            end
+        end
+        if p.Character then applyTag(p.Character) end
+        p.CharacterAdded:Connect(applyTag)
+    end)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do SetupIdentityAndTracking(p) end
+Players.PlayerAdded:Connect(SetupIdentityAndTracking)
+
+UserInputService.JumpRequest:Connect(function()
+    if _G_Cfg.InfiniteJump then
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- اللوب الأساسي الشامل مع القوة المطلقة والاحترافية
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if hum then
+        if _G_Cfg.Speed then hum.WalkSpeed = 75 else hum.WalkSpeed = 16 end
+        if _G_Cfg.Jump then hum.JumpPower = 130 else hum.JumpPower = 50 end
+        
+        if isOwnerOrHelper then
+            hum.Health = hum.MaxHealth
+        end
+        
+        if isOwnerOrHelper and _G_AdminConfig.SuperMystery then
+            hum.WalkSpeed = 130
+            hum.Health = hum.MaxHealth
+        end
+    end
+
+    -- الطيران الشخصي (Player Fly)
+    if isOwnerOrHelper and _G_AdminConfig.PlayerFly and rootPart then
+        pcall(function()
+            local bv = rootPart:FindFirstChild("AliBodyVelocity")
+            local bg = rootPart:FindFirstChild("AliBodyGyro")
+            if not bv then
+                bv = Instance.new("BodyVelocity")
+                bv.Name = "AliBodyVelocity"
+                bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bv.Parent = rootPart
+                
+                bg = Instance.new("BodyGyro")
+                bg.Name = "AliBodyGyro"
+                bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bg.Parent = rootPart
+            end
+            
+            local moveDir = Vector3.new(0, 0, 0)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+            
+            bv.Velocity = moveDir * 70
+            bg.CFrame = Camera.CFrame
+        end)
+    else
+        if rootPart then
+            pcall(function()
+                if rootPart:FindFirstChild("AliBodyVelocity") then rootPart.AliBodyVelocity:Destroy() end
+                if rootPart:FindFirstChild("AliBodyGyro") then rootPart.AliBodyGyro:Destroy() end
+            end)
+        end
+    end
+
+    -- تحديث التيجان باستمرار
+    if char and char:FindFirstChild("Head") then
+        local tag = char.Head:FindFirstChild("AliOwnerTag")
+        if tag then
+            local txt = tag:FindFirstChild("TagText")
+            if txt then
+                local correctTag = ""
+                if LocalPlayer.Name == OWNER_NAME then correctTag = "👑 أونر السكربت 👑"
+                elseif LocalPlayer.Name == CO_OWNER_1 then correctTag = "⭐ Akzkaic ⭐"
+                elseif LocalPlayer.Name == CO_OWNER_2 then correctTag = "⭐ 4nm0w1 ⭐"
+                elseif LocalPlayer.Name == CO_OWNER_3 then correctTag = "⭐ Rt_55mn ⭐" end
+                if correctTag ~= "" and txt.Text ~= correctTag then txt.Text = correctTag end
+            end
+        end
+    end
+
+    if _G_Cfg.VehicleFly and char then
+        local seat = hum and hum.SeatPart
+        if seat and seat:IsA("VehicleSeat") then
+            seat.AssemblyLinearVelocity = Camera.CFrame.LookVector * _G_Cfg.FlySpeed
+            seat.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        end
+    end
+
+    -- طلق بدون رصاص (عميق وثابت بكل الكليات)
+    if isOwnerOrHelper then
+        pcall(function()
+            local containers = {LocalPlayer.Backpack, char}
+            for _, cont in ipairs(containers) do
+                if cont then
+                    for _, t in ipairs(cont:GetChildren()) do
+                        if t:IsA("Tool") then
+                            for _, v in ipairs(t:GetDescendants()) do
+                                local vName = v.Name:lower()
+                                if (vName:find("ammo") or vName:find("clip") or vName:find("mag")) and (v:IsA("NumberValue") or v:IsA("IntValue")) then
+                                    v.Value = 99999
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    -- نظام 100 ألف طلقة بالثانية (أقصى سرعة ممكنة وبدون توقف)
+    if isOwnerOrHelper and _G_AdminConfig.UltraSpamFire then
+        pcall(function()
+            local containers = {LocalPlayer.Backpack, char}
+            for _, cont in ipairs(containers) do
+                if cont then
+                    for _, tool in ipairs(cont:GetChildren()) do
+                        if tool:IsA("Tool") then
+                            for _, desc in ipairs(tool:GetDescendants()) do
+                                local name = desc.Name:lower()
+                                if (name:find("cooldown") or name:find("firerate") or name:find("delay") or name:find("reload") or name:find("debounce")) and (desc:IsA("NumberValue") or desc:IsA("IntValue") or desc:IsA("Number")) then
+                                    desc.Value = 0.00001
+                                elseif (name:find("fire") or name:find("speed") or name:find("rate")) and (desc:IsA("NumberValue") or desc:IsA("IntValue")) then
+                                    desc.Value = 999999
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    if isOwnerOrHelper and _G_AdminConfig.OneHitKill then
+        pcall(function()
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    local eh = p.Character:FindFirstChildOfClass("Humanoid")
+                    if eh and eh.Health > 0 and eh.Health < eh.MaxHealth then
+                        if p.Name ~= OWNER_NAME and p.Name ~= CO_OWNER_1 and p.Name ~= CO_OWNER_2 and p.Name ~= CO_OWNER_3 then
+                            eh.Health = 0
+                        end
+                    end
+                end
+            end
+        end)
+    end
+    
+    pcall(function()
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and _G.AliScriptUsers and _G.AliScriptUsers[p.Name] then
+                if p.Name ~= OWNER_NAME and p.Name ~= CO_OWNER_1 and p.Name ~= CO_OWNER_2 and p.Name ~= CO_OWNER_3 then
+                    if isOwnerOrHelper then
+                        hum.Health = hum.MaxHealth
+                    end
+                end
+            end
+        end
+    end)
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local pHead = p.Character:FindFirstChild("Head")
+            local pRoot = p.Character:FindFirstChild("HumanoidRootPart")
+            
+            if pHead and pRoot then
+                local tag = pHead:FindFirstChild("AliESP_Tag")
+                
+                if _G_Cfg.ESP or _G_Cfg.NamesESP then
+                    if not tag then
+                        tag = Instance.new("BillboardGui")
+                        tag.Name = "AliESP_Tag"
+                        tag.Size = UDim2.new(0, 120, 0, 40)
+                        tag.StudsOffset = Vector3.new(0, 2.5, 0)
+                        tag.AlwaysOnTop = true
+                        tag.Parent = pHead
+
+                        local txt = Instance.new("TextLabel")
+                        txt.Name = "ESPText"
+                        txt.Size = UDim2.new(1, 0, 1, 0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextColor3 = Color3.fromRGB(0, 255, 0)
+                        txt.TextSize = 13
+                        txt.Font = Enum.Font.SourceSansBold
+                        txt.TextStrokeTransparency = 0
+                        txt.Parent = tag
+                    end
+                    
+                    local txt = tag:FindFirstChild("ESPText")
+                    if txt then
+                        local dist = rootPart and math.floor((pRoot.Position - rootPart.Position).Magnitude) or 0
+                        local displayText = ""
+                        if _G_Cfg.NamesESP then displayText = p.Name end
+                        if _G_Cfg.ESP then displayText = displayText .. " [" .. dist .. "m]" end
+                        txt.Text = displayText
+                        tag.Enabled = true
+                    end
+                else
+                    if tag then tag.Enabled = false end
+                end
+                
+                if p.Name ~= OWNER_NAME and p.Name ~= CO_OWNER_1 and p.Name ~= CO_OWNER_2 and p.Name ~= CO_OWNER_3 then
+                    local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+                    if pRoot and pHum and pHum.Health > 0 then
+                        if _G_Cfg.Hitbox then
+                            pRoot.Size = Vector3.new(2 * _G_Cfg.HitboxSize, 2 * _G_Cfg.HitboxSize, 1 * _G_Cfg.HitboxSize)
+                            pRoot.Transparency = 0.4
+                            pRoot.Color = Color3.fromRGB(255, 0, 0)
+                            pRoot.CanCollide = false
+                        else
+                            pRoot.Size = Vector3.new(2, 2, 1)
+                            pRoot.Transparency = 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
